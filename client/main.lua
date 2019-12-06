@@ -22,8 +22,12 @@ Citizen.CreateThread(function()
 	local GUI      = {}
 	GUI.Time       = 0
 	local MenuType = 'default'
+	local OpenedMenus = {}
+	local lockUI	  = false
 
 	local openMenu = function(namespace, name, data)
+
+		OpenedMenus[namespace .. '_' .. name] = true
 
 		SendNUIMessage({
 			action    = 'openMenu',
@@ -32,9 +36,56 @@ Citizen.CreateThread(function()
 			data      = data,
 		})
 
+		--[ added by Jay to help menu UI a bit ]-------------------------------------
+		lockUI	= true
+		Citizen.CreateThread(function()
+			while lockUI do
+
+	  			Wait(100)
+ 			
+  				-- controls locked
+				DisableControlAction(0, 1,   true) -- LookLeftRight
+				DisableControlAction(0, 2,   true) -- LookUpDown
+				DisableControlAction(0, 142, true) -- MeleeAttackAlternate
+				DisableControlAction(0, 106, true) -- VehicleMouseControlOverride
+				DisableControlAction(0, 12, true) -- WeaponWheelUpDown
+				DisableControlAction(0, 14, true) -- WeaponWheelNext
+				DisableControlAction(0, 15, true) -- WeaponWheelPrev
+				DisableControlAction(0, 16, true) -- SelectNextWeapon
+				DisableControlAction(0, 17, true) -- SelectPrevWeapon
+				DisableControlAction(0, 25,   true) -- Input Aim
+				DisableControlAction(0, 24,   true) -- Input Attack
+				DisableControlAction(0, 140,  true) -- Melee Attack Alternate
+				DisableControlAction(0, 141,  true) -- Melee Attack Alternate
+				DisableControlAction(0, 257,  true) -- Input Attack 2
+				DisableControlAction(0, 263,  true) -- Input Melee Attack
+				DisableControlAction(0, 264,  true) -- Input Melee Attack 2
+  			end
+
+  			-- controls unlocked
+			DisableControlAction(0, 1,   false) -- LookLeftRight
+			DisableControlAction(0, 2,   false) -- LookUpDown
+			DisableControlAction(0, 142, false) -- MeleeAttackAlternate
+			DisableControlAction(0, 106, false) -- VehicleMouseControlOverride
+			DisableControlAction(0, 12, false) -- WeaponWheelUpDown
+			DisableControlAction(0, 14, false) -- WeaponWheelNext
+			DisableControlAction(0, 15, false) -- WeaponWheelPrev
+			DisableControlAction(0, 16, false) -- SelectNextWeapon
+			DisableControlAction(0, 17, false) -- SelectPrevWeapon
+			DisableControlAction(0, 25,   false) -- Input Aim
+			DisableControlAction(0, 24,   false) -- Input Attack
+			DisableControlAction(0, 140,  false) -- Melee Attack Alternate
+			DisableControlAction(0, 141,  false) -- Melee Attack Alternate
+			DisableControlAction(0, 257,  false) -- Input Attack 2
+			DisableControlAction(0, 263,  false) -- Input Melee Attack
+			DisableControlAction(0, 264,  false) -- Input Melee Attack 2
+		end)
+		--[ end of jay's control locks ]-------------------------------------------
 	end
 
 	local closeMenu = function(namespace, name)
+		OpenedMenus[namespace .. '_' .. name] = nil
+		local OpenedMenuCount                 = 0
 
 		SendNUIMessage({
 			action    = 'closeMenu',
@@ -42,6 +93,16 @@ Citizen.CreateThread(function()
 			name      = name,
 			data      = data,
 		})
+
+		for k,v in pairs(OpenedMenus) do
+			if v == true then
+				OpenedMenuCount = OpenedMenuCount + 1
+			end
+		end
+
+		if OpenedMenuCount == 0 then
+			lockUI = false
+		end
 	end
 
 	ESX.UI.Menu.RegisterType(MenuType, openMenu, closeMenu)
@@ -93,7 +154,7 @@ Citizen.CreateThread(function()
 	Citizen.CreateThread(function()
 		while true do
 
-	  	Wait(0)
+	  		Wait(0)
 
 			if IsControlPressed(0, Keys['ENTER']) and (GetGameTimer() - GUI.Time) > 150 then
 
@@ -160,8 +221,7 @@ Citizen.CreateThread(function()
 				GUI.Time = GetGameTimer()
 
 			end
-
-	  end
+	  	end
 	end)
 
 end)
